@@ -1,0 +1,29 @@
+{% extends "layout.html" %} {% block title %}Transaction History{% endblock %}
+{% block main %}
+<div class="container p-5">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th scope="col">Date</th>
+        <th scope="col">Time</th>
+        <th scope="col" colspan="2">Transaction Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if flag %} {% for log in logs %}
+      <tr>
+        <td>{{ log.datetime.strftime("%d %b, %Y") }}</td>
+        <td>{{ log.datetime.strftime("%H:%M:%S") }}</td>
+        <td colspan="2">{{ log.log_type }} {{ log.stock_info }}</td>
+      </tr>
+      {% endfor %} {% else %}
+      <tr>
+        <td colspan="4">
+          You have not made any transactions!
+        </td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
