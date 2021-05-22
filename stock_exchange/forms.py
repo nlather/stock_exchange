@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField , RadioField,TextAreaField
 from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
 from stock_exchange import get_api
 from stock_exchange.dbmodels import User
@@ -34,3 +34,9 @@ class SellForm(FlaskForm):
     symbol = StringField('Symbol', validators=[DataRequired()])
     amount = IntegerField('Amount', validators=[DataRequired()])
     submit = SubmitField('Sell Stocks')
+
+class NewTransactionForm(FlaskForm) :
+    transactionDesc = TextAreaField('Transaction Description' , validators=[DataRequired()]) 
+    amount = IntegerField('Amount($)', validators=[DataRequired()])
+    transactionType = RadioField('Transaction Type',choices=['Expense','Income'], default='Income')
+    submit = SubmitField('Add Transaction')

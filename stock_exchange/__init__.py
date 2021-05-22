@@ -11,7 +11,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 API_KEY = os.environ.get('API_KEY')
-
+print(API_KEY)
 def get_api(symbol):
     response = requests.get(f'https://cloud.iexapis.com/stable/stock/{symbol}/quote?token={API_KEY}')
     if response.status_code != 200:

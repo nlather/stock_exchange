@@ -1,6 +1,6 @@
 from flask import render_template, url_for, flash, redirect
 from stock_exchange import app, db, bcrypt, get_api
-from stock_exchange.forms import RegistrationForm, LoginForm, QuoteForm, BuyForm, SellForm
+from stock_exchange.forms import RegistrationForm, LoginForm, QuoteForm, BuyForm, SellForm, NewTransactionForm
 from stock_exchange.dbmodels import User, Stock, Log
 from flask_login import login_user, current_user, logout_user, login_required
 
@@ -21,7 +21,26 @@ def index():
             'total_price':f"{stock.amount*api_data['latestPrice']:.2f}"
         })
         total += stock.amount*api_data['latestPrice']
-    return render_template('index.html', stocks=stocks, flag=bool(len(stocks) > 0), cash=f'{current_user.cash:.2f}', total=f'{total:.2f}')
+    logs_list=current_user.logs
+    logs=[]
+    for log in logs_list :
+
+        if log.log_type=="Expense" or log.log_type=="Income" :
+            expense="-"
+            income="-"
+            if log.log_type=="Expense" :
+                expense=log.stock_info.split(' ')[1]
+            else :
+                income=log.stock_info.split(' ')[1]
+            logs.append({
+            'datetime': log.datetime,
+            'income':income,
+            'expense':expense,
+            'description':log.stock_info.split(' ')[3]
+
+            })
+
+    return render_template('index.html', stocks=stocks, logs=logs,flag_log=bool(len(logs) > 0), flag=bool(len(stocks) > 0), cash=f'{current_user.cash:.2f}', total=f'{total:.2f}')
 
 @app.route("/history")
 @login_required
@@ -67,6 +86,26 @@ def buy():
             db.session.commit()
             return redirect(url_for('index'))
     return render_template('buy.html', form=form)
+@app.route("/new", methods=['GET', 'POST'])
+@login_required
+def new():
+    form = NewTransactionForm()
+    if form.validate_on_submit():
+        amount=form.amount.data
+        ttype=form.transactionType.data
+        if ttype=="Expense" and amount>current_user.cash :
+            flash('You don\'t have enough cash!', 'danger')
+        else :
+            if ttype=="Income" :
+                current_user.cash+=amount
+            else :
+                current_user.cash-=amount
+            log=Log(owner=current_user, log_type=form.transactionType.data,stock_info=f"of ${form.amount.data} : {form.transactionDesc.data}")
+            db.session.add(log)
+            db.session.commit()
+            flash(f'Successfully Added the transaction under the {form.transactionType.data} category' ,'success')
+            return redirect(url_for('new'))
+    return render_template('new.html', form=form)
 
 @app.route("/sell", methods=['GET', 'POST'])
 @login_required

@@ -1,8 +1,9 @@
 {% extends "layout.html" %} {% block title %}Dashboard{% endblock %} {% block
 main %}
-<div class="container p-5">
-  <table class="table table-striped">
-    <thead>
+<div class="container p-5" >
+  <h3 class="text-center"> <span class="badge badge-secondary ">Stocks Transactions</span></h3>
+  <table class="table">
+    <thead class="thead-dark">
       <tr>
         <th scope="col">Company Name</th>
         <th scope="col">Symbol</th>
@@ -36,6 +37,45 @@ main %}
       </tr>
       <tr>
         <td colspan="4"></td>
+        <td>${{ total }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="container p-5" >
+  <h3 class="text-center"> <span class="badge badge-secondary ">Personal Transactions</span></h3>
+  <table class="table">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">Date and Time</th>
+        <th scope="col">Expense</th>
+        <th scope="col">Income</th>
+        <th scope="col">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if flag_log %} {% for log in logs %}
+      <tr>
+        <td>{{ log.datetime.strftime("%d %b, %Y") }} ({{ log.datetime.strftime("%H:%M:%S") }})</td>
+        <td> {{log.expense}} </td>
+        <td>{{ log.income }}</td>
+        <td>{{ log.description }}</td>
+      </tr>
+      {% endfor %} {% else %}
+      <tr>
+        <td>---</td>
+        <td>---</td>
+        <td>---</td>
+        <td>---</td>
+      </tr>
+      {% endif %}
+      <tr>
+        <th scope="row">Cash</th>
+        <td colspan="2"></td>
+        <td>${{ cash }}</td>
+      </tr>
+      <tr>
+        <td colspan="3"></td>
         <td>${{ total }}</td>
       </tr>
     </tbody>
