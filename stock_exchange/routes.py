@@ -3,6 +3,10 @@ from stock_exchange import app, db, bcrypt, get_api
 from stock_exchange.forms import RegistrationForm, LoginForm, QuoteForm, BuyForm, SellForm, NewTransactionForm
 from stock_exchange.dbmodels import User, Stock, Log
 from flask_login import login_user, current_user, logout_user, login_required
+from flask_paginate import Pagination, get_page_args
+
+def get_posts(offset, per_page, logs) :
+    return logs[offset: offset+per_page]
 
 @app.route("/")
 @app.route("/home")
@@ -40,13 +44,33 @@ def index():
 
             })
 
-    return render_template('index.html', stocks=stocks, logs=logs,flag_log=bool(len(logs) > 0), flag=bool(len(stocks) > 0), cash=f'{current_user.cash:.2f}', total=f'{total:.2f}')
+    page,per_page,offset= get_page_args(page_parameter='page',per_page_parameter='per_page')
+    per_page=7
+    total_logs=len(logs)
+    pagination_logs= get_posts(offset=offset, per_page=per_page, logs=logs)
+    paginationLog= Pagination (page=page,per_page=per_page, total=total_logs, css_framework='bootstrap4')
+    return render_template('index.html',stocks=stocks, paginationLog=paginationLog,logs=pagination_logs,flag_log=bool(len(logs) > 0), flag=bool(len(stocks) > 0), cash=f'{current_user.cash:.2f}', total=f'{total:.2f}')
 
 @app.route("/history")
 @login_required
 def history():
-    logs = current_user.logs
-    return render_template('history.html', flag = bool(len(logs) > 0), logs=logs)
+    logs_list = current_user.logs
+    logs=[]
+    for log in logs_list :
+        logs.append({
+            'datetime': log.datetime,
+            'log_type':log.log_type,
+            'stock_info':log.stock_info
+            })
+        # print(log.log_type + '->>>' + log.stock_info)
+    page,per_page,offset= get_page_args(page_parameter='page',per_page_parameter='per_page')
+    per_page=10
+    total_logs=len(logs)
+    
+    pagination_logs= get_posts(offset=offset, per_page=per_page, logs=logs)
+    paginationLog= Pagination (page=page,per_page=per_page, total=total_logs, css_framework='bootstrap4')
+    
+    return render_template('history.html', flag = bool(len(logs) > 0), logs=pagination_logs, paginationLog=paginationLog,page=page,per_page=per_page)
 
 @app.route("/quote", methods=['GET', 'POST'])
 def quote():
