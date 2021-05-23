@@ -10,7 +10,9 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(30), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
-    cash = db.Column(db.Float, nullable=False, default=10000)
+    cash = db.Column(db.Float, nullable=False, default=0)
+    expenditure = db.Column(db.Float, nullable=False, default=0)
+    income = db.Column(db.Float, nullable=False, default=0)
     stocks = db.relationship('Stock', backref='owner', lazy=True)
     logs = db.relationship('Log', backref='owner', lazy=True)
 
@@ -23,6 +25,6 @@ class Stock(db.Model):
 class Log(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     datetime = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone(timedelta(hours=5, minutes=30))))
-    stock_info = db.Column(db.String(60), nullable=False)
+    description = db.Column(db.String(60), nullable=False)
     log_type = db.Column(db.String(6), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

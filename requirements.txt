@@ -20,7 +20,6 @@ itsdangerous==2.0.1
 Jinja2==3.0.1
 MarkupSafe==2.0.1
 Pillow==7.2.0
-pkg-resources==0.0.0
 pycparser==2.20
 python-resize-image==1.1.19
 requests==2.25.0

@@ -11,10 +11,14 @@
     </thead>
     <tbody>
       {% if flag %} {% for log in logs %}
-      <tr>
+      {% if log.log_type=="Expense" %}
+      <tr style="background-color:rgb(233, 166, 177)">
+      {% else %}
+      <tr style="background-color:rgb(147, 233, 180)">
+      {% endif %}
         <td>{{ log.datetime.strftime("%d %b, %Y") }}</td>
         <td>{{ log.datetime.strftime("%H:%M:%S") }}</td>
-        <td colspan="2">{{ log.log_type }} {{ log.stock_info }}</td>
+        <td colspan="2">{{ log.desc }}</td>
       </tr>
       {% endfor %} {% else %}
       <tr>

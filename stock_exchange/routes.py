@@ -14,7 +14,7 @@ def get_posts(offset, per_page, logs) :
 def index():
     stocklist = current_user.stocks
     stocks = []
-    total = current_user.cash
+    total = 0
     for stock in stocklist:
         api_data = get_api(stock.symbol)['data']
         stocks.append({
@@ -25,31 +25,7 @@ def index():
             'total_price':f"{stock.amount*api_data['latestPrice']:.2f}"
         })
         total += stock.amount*api_data['latestPrice']
-    logs_list=current_user.logs
-    logs=[]
-    for log in logs_list :
-
-        if log.log_type=="Expense" or log.log_type=="Income" :
-            expense="-"
-            income="-"
-            if log.log_type=="Expense" :
-                expense=log.stock_info.split(' ')[1]
-            else :
-                income=log.stock_info.split(' ')[1]
-            logs.append({
-            'datetime': log.datetime,
-            'income':income,
-            'expense':expense,
-            'description':log.stock_info.split(' ')[3]
-
-            })
-
-    page,per_page,offset= get_page_args(page_parameter='page',per_page_parameter='per_page')
-    per_page=7
-    total_logs=len(logs)
-    pagination_logs= get_posts(offset=offset, per_page=per_page, logs=logs)
-    paginationLog= Pagination (page=page,per_page=per_page, total=total_logs, css_framework='bootstrap4')
-    return render_template('index.html',stocks=stocks, paginationLog=paginationLog,logs=pagination_logs,flag_log=bool(len(logs) > 0), flag=bool(len(stocks) > 0), cash=f'{current_user.cash:.2f}', total=f'{total:.2f}')
+    return render_template('index.html',stocks=stocks, flag=bool(len(stocks) > 0), cash=f'{current_user.cash:.2f}', total=f'{total:.2f}', expenditure=f'{current_user.expenditure:.2f}', income=f'{current_user.income:.2f}')
 
 @app.route("/history")
 @login_required
@@ -60,7 +36,7 @@ def history():
         logs.append({
             'datetime': log.datetime,
             'log_type':log.log_type,
-            'stock_info':log.stock_info
+            'desc':log.description
             })
         # print(log.log_type + '->>>' + log.stock_info)
     page,per_page,offset= get_page_args(page_parameter='page',per_page_parameter='per_page')
@@ -68,7 +44,7 @@ def history():
     total_logs=len(logs)
     
     pagination_logs= get_posts(offset=offset, per_page=per_page, logs=logs)
-    paginationLog= Pagination (page=page,per_page=per_page, total=total_logs, css_framework='bootstrap4')
+    paginationLog= Pagination(page=page,per_page=per_page, total=total_logs, css_framework='bootstrap4')
     
     return render_template('history.html', flag = bool(len(logs) > 0), logs=pagination_logs, paginationLog=paginationLog,page=page,per_page=per_page)
 
@@ -99,17 +75,19 @@ def buy():
             price = api_data['data']['latestPrice']*form.amount.data
             symbol = api_data['data']['symbol']
             current_user.cash -= price
+            current_user.expenditure += price
             stock = Stock.query.filter_by(owner=current_user, symbol=symbol).first()
             if stock:
                 stock.amount += form.amount.data
             else:
                 stock = Stock(owner=current_user, symbol=symbol, amount=form.amount.data)
                 db.session.add(stock)
-            log = Log(owner=current_user, log_type='Bought', stock_info=f"{form.amount.data} shares of {symbol} for ${price:.2f}")
+            log = Log(owner=current_user, log_type='Expense', description=f"Bought {form.amount.data} shares of {symbol} for ${price:.2f}")
             db.session.add(log)
             db.session.commit()
             return redirect(url_for('index'))
     return render_template('buy.html', form=form)
+
 @app.route("/new", methods=['GET', 'POST'])
 @login_required
 def new():
@@ -122,13 +100,15 @@ def new():
         else :
             if ttype=="Income" :
                 current_user.cash+=amount
+                current_user.income+=amount
             else :
                 current_user.cash-=amount
-            log=Log(owner=current_user, log_type=form.transactionType.data,stock_info=f"of ${form.amount.data} : {form.transactionDesc.data}")
+                current_user.expenditure+=amount
+            log=Log(owner=current_user, log_type=form.transactionType.data, description=f"{ttype} of ${form.amount.data} : {form.transactionDesc.data}")
             db.session.add(log)
             db.session.commit()
             flash(f'Successfully Added the transaction under the {form.transactionType.data} category' ,'success')
-            return redirect(url_for('new'))
+            return redirect(url_for('index'))
     return render_template('new.html', form=form)
 
 @app.route("/sell", methods=['GET', 'POST'])
@@ -145,10 +125,11 @@ def sell():
             stock = Stock.query.filter_by(owner=current_user, symbol=symbol).first()
             if stock and stock.amount >= form.amount.data:
                 current_user.cash += price
+                current_user.income += price
                 stock.amount -= form.amount.data
                 if stock.amount == 0:
                     db.session.delete(stock)
-                log = Log(owner=current_user, log_type='Sold', stock_info=f"{form.amount.data} shares of {symbol} for ${price:.2f}")
+                log = Log(owner=current_user, log_type='Income', description=f"Sold {form.amount.data} shares of {symbol} for ${price:.2f}")
                 db.session.add(log)
                 db.session.commit()
                 return redirect(url_for('index'))
